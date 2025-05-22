@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DailyTasks</string>
+
+    <string name="taskPopupTitleLabel">TITLE</string>
+    <string name="taskPopupDescriptionLabel">SHORT DESCRIPTION</string>
+
+    <string name="itemNotificationLabel">Notification: </string>
+    <string name="itemDeadlineLabel">Deadline: </string>
+</resources>

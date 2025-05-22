@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="30dp">
+        <TextView
+            android:id="@+id/editTitleLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Title"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+
+            />
+        <EditText
+            android:id="@+id/editTitleInput"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:gravity="start"
+
+            android:ems="10"
+
+            android:textSize="20sp"
+            android:fontFamily="@font/main_font"
+
+            android:background="@drawable/white_box"
+
+            android:padding="5dp"
+            android:layout_below="@id/editTitleLabel"
+
+            android:inputType="text"
+            android:singleLine="true"
+            android:maxLength="20"
+            />
+
+
+        <TextView
+            android:id="@+id/editDescriptionLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Description"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@id/editTitleInput"
+            android:layout_marginTop="10dp"
+            />
+
+        <EditText
+            android:id="@+id/editDescriptionMultiLine"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+
+            android:ems="10"
+            android:gravity="start"
+            android:inputType="textMultiLine"
+
+            android:textSize="15sp"
+            android:fontFamily="@font/main_font"
+            android:background="@drawable/white_box"
+
+            android:padding="5dp"
+
+            android:layout_below="@id/editDescriptionLabel"
+            android:layout_alignStart="@+id/editTitleInput"
+            android:layout_alignEnd="@+id/editTitleInput"
+
+            android:maxLines="5"
+            />
+
+
+
+        <TextView
+            android:id="@+id/editSendAlertLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Send Alert"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="5dp"
+            android:layout_below="@id/editDescriptionMultiLine"
+            />
+        <RelativeLayout
+            android:id="@+id/editSendAlertLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:layout_below="@+id/editSendAlertLabel">
+            <EditText
+                android:id="@+id/editHourInput"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:ems="2"
+                android:inputType="number"
+
+                android:textSize="15sp"
+                android:fontFamily="@font/main_font"
+                android:background="@drawable/white_box"
+
+                android:padding="5dp"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+
+                android:maxLength="2"
+                android:singleLine="true"
+                />
+            <TextView
+                android:id="@+id/editHourMiniLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="hours"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textFontWeight="900"
+                android:textColor="@color/white"
+                android:fontFamily="@font/main_font"
+
+                android:layout_toEndOf="@id/editHourInput"
+                android:layout_alignBottom="@id/editHourInput"
+
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="10dp"
+
+                />
+            <EditText
+                android:id="@+id/editMinuteInput"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="2"
+                android:inputType="number"
+
+                android:textSize="15sp"
+                android:fontFamily="@font/main_font"
+                android:background="@drawable/white_box"
+
+                android:padding="5dp"
+                android:layout_toEndOf="@id/editHourMiniLabel"
+                android:gravity="center"
+                android:layout_alignTop="@+id/editHourInput"
+                android:layout_alignBottom="@+id/editHourInput"
+
+                android:maxLength="2"
+                android:singleLine="true"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="minutes"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textFontWeight="900"
+                android:textColor="@color/white"
+                android:fontFamily="@font/main_font"
+
+                android:layout_toEndOf="@+id/editMinuteInput"
+                android:layout_alignBottom="@id/editMinuteInput"
+
+                android:layout_marginStart="5dp"
+                />
+        </RelativeLayout>
+
+
+        <TextView
+            android:id="@+id/editDeadlineLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Deadline"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@+id/editSendAlertLayout"
+            android:layout_marginTop="10dp"
+            />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:layout_below="@id/editDeadlineLabel">
+            <EditText
+                android:id="@+id/editDeadlineInput"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="7"
+                android:inputType="date"
+
+                android:textSize="15sp"
+                android:fontFamily="@font/main_font"
+                android:background="@drawable/white_box"
+
+                android:padding="10dp"
+                android:layout_centerVertical="true"
+                />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/editApplyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="Apply"
+                android:fontFamily="@font/main_font"
+
+                android:layout_alignParentEnd="true"
+                android:backgroundTint="@color/button_color"
+                app:cornerRadius="10dp"
+                />
+        </RelativeLayout>
+    </RelativeLayout>
+</RelativeLayout>

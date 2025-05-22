@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginVertical="5dp"
+    android:layout_centerVertical="true"
+    android:id="@+id/itemRelativeLayout">
+
+    <RelativeLayout
+        android:id="@+id/itemLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        android:background="@drawable/darkblue_box"
+        android:clickable="true">
+        <TextView
+            android:id="@+id/itemTaskTitleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="TASK TITLE"
+            android:textSize="20sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:fontFamily="@font/main_font"
+
+            android:layout_marginBottom="10dp"
+            />
+        <TextView
+            android:id="@+id/itemNotificationLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+
+            android:text="@string/itemNotificationLabel"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@+id/itemTaskTitleLabel"
+            android:layout_alignStart="@+id/itemTaskTitleLabel"
+            />
+        <TextView
+            android:id="@+id/itemNotificationResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@id/itemTaskTitleLabel"
+            android:layout_toEndOf="@+id/itemNotificationLabel"
+            android:layout_alignBottom="@+id/itemNotificationLabel"
+
+            android:layout_marginStart="8dp"
+            />
+        <TextView
+            android:id="@+id/itemDeadlineLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="start|top"
+
+            android:text="@string/itemDeadlineLabel"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@+id/itemNotificationLabel"
+            android:layout_alignEnd="@+id/itemNotificationLabel"
+            />
+        <TextView
+            android:id="@+id/itemDeadlineResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@id/itemNotificationResult"
+            android:layout_toEndOf="@+id/itemDeadlineLabel"
+            android:layout_alignBottom="@+id/itemDeadlineLabel"
+
+            android:layout_marginStart="8dp"
+            />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/itemFinishTaskButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:src="@drawable/baseline_done_24"
+
+                app:tint="@color/button_color"
+                app:shapeAppearanceOverlay="@style/FAB_CustomShape"
+                style="@style/FAB_CustomShape"
+                android:backgroundTint="@color/white"
+
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="12dp"
+                android:layout_below="@id/itemFinishTaskButton"
+                android:layout_alignEnd="@+id/itemFinishTaskButton"
+                android:layout_alignStart="@+id/itemFinishTaskButton"
+
+                android:text="Done"
+                android:textColor="@color/white"
+                android:fontFamily="@font/main_font"
+                android:gravity="center"
+                />
+
+    </RelativeLayout>
+
+
+</RelativeLayout>
+
+<!--<com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--android:id="@+id/itemEditTaskButton"-->
+<!--android:layout_width="wrap_content"-->
+<!--android:layout_height="wrap_content"-->
+
+<!--android:src="@drawable/baseline_settings_24"-->
+<!--android:backgroundTint="@color/gray"-->
+
+<!--android:layout_toStartOf="@+id/itemFinishTaskButton"-->
+<!--android:layout_marginEnd="10dp"-->
+<!--android:layout_centerVertical="true"-->
+<!--    />-->

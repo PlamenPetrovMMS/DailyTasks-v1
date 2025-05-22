@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:padding="20dp">
+        <TextView
+            android:id="@+id/taskPopupTitleLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="@string/taskPopupTitleLabel"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+            />
+        <EditText
+            android:id="@+id/taskPopupTitleInputField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:textFontWeight="600"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@+id/taskPopupTitleLabel"
+            android:background="@drawable/white_box"
+            android:padding="7dp"
+            android:layout_marginBottom="20dp"
+            />
+        <TextView
+            android:id="@+id/taskPopupDescriptionLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="@string/taskPopupDescriptionLabel"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textFontWeight="900"
+            android:textColor="@color/white"
+            android:fontFamily="@font/main_font"
+
+            android:layout_below="@+id/taskPopupTitleInputField"
+            />
+        <EditText
+            android:id="@+id/taskPopupDescriptionInputField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:layout_below="@+id/taskPopupDescriptionLabel"
+            android:background="@drawable/white_box"
+            android:padding="7dp"
+            android:textFontWeight="600"
+            android:fontFamily="@font/main_font"
+            />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/taskPopupAddButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_playlist_add_24"
+
+            app:tint="@color/white"
+            app:shapeAppearanceOverlay="@style/FAB_CustomShape"
+            style="@style/FAB_CustomShape"
+            android:backgroundTint="@color/button_color"
+
+            android:layout_below="@+id/taskPopupDescriptionInputField"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="20dp"
+            />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/taskPopupCancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:src="@drawable/sharp_clear_24"
+
+            app:tint="@color/white"
+            app:shapeAppearanceOverlay="@style/FAB_CustomShape"
+            style="@style/FAB_CustomShape"
+            android:backgroundTint="@color/button_color"
+
+            android:layout_below="@+id/taskPopupDescriptionInputField"
+            android:layout_toStartOf="@+id/taskPopupAddButton"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="20dp"
+
+            />
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="green">#76FF03</color>
+    <color name="gray">#9E9E9E</color>
+
+    <color name="light_orange_box_color">#FFB22C</color>
+    <color name="orange_box_color">#FA812F</color>
+    <color name="yellow_box_color">#F3C623</color>
+
+    <color name="dark_box_color">#021526</color>
+    <color name="dark_blue_box_color">#03346E</color>
+    <color name="blue_box_color">#6EACDA</color>
+    <color name="bright_box_color">#E2E2B6</color>
+
+    <color name="button_color">#021526</color>
+
+
+</resources>
