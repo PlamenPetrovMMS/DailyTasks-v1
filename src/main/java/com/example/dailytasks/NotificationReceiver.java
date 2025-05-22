@@ -96,7 +96,7 @@ public class NotificationReceiver extends BroadcastReceiver {
 
         // Create notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.orange_box)
+                .setSmallIcon(R.drawable.dt_logo)
                 .setContentTitle(task.getTitle())
                 .setContentText(task.getDescription())
                 .setGroup(groupKey)
@@ -110,7 +110,7 @@ public class NotificationReceiver extends BroadcastReceiver {
 
         // Create notification summary
         Notification notificationSummary = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.orange_box)
+                .setSmallIcon(R.drawable.dt_logo)
                 .setContentTitle("DailyTasks")
                 .setContentText("You have multiple tasks for today!")
                 .setGroup(groupKey)

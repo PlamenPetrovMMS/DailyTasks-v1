@@ -145,24 +145,20 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 //        });
 
         holder.getFinishButton().setOnClickListener(view -> {
-
-
-
             if (position >= 0 && position < localDataSet.size()) {
 
                 task.setSendingState(false);
                 task.setDone(true);
-
-
-                DBHelper dbHelper = new DBHelper(CONTEXT);
-                dbHelper.updateTask(task);
-                dbHelper.printAllTasks();
 
                 localDataSet.remove(position);
 
                 // Notify the adapter that the item was removed
                 notifyItemRemoved(position);
                 notifyItemRangeChanged(position, localDataSet.size()); // This ensures other items are properly re-positioned
+
+                DBHelper dbHelper = new DBHelper(CONTEXT);
+                dbHelper.updateTask(task);
+
                 Toast.makeText(CONTEXT, "Task Done", Toast.LENGTH_SHORT).show();
 
                 dbHelper.close();
