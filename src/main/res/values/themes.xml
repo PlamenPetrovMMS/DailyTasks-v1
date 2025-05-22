@@ -20,5 +20,8 @@
         <item name="cornerSize">5dp</item>  <!-- 12dp For a slightly rounded square -->
                                             <!-- 0dp For Sharp square corners -->
     </style>
+    <style name="CustomEditTextStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:textCursorDrawable">@drawable/input_cursor</item>
+    </style>
 
 </resources>

@@ -45,6 +45,8 @@
             android:fontFamily="@font/main_font"
 
             android:background="@drawable/white_box"
+            android:textColor="@color/black"
+            style="@style/CustomEditTextStyle"
 
             android:padding="5dp"
             android:layout_below="@id/editTitleLabel"
@@ -83,6 +85,8 @@
             android:textSize="15sp"
             android:fontFamily="@font/main_font"
             android:background="@drawable/white_box"
+            android:textColor="@color/black"
+            style="@style/CustomEditTextStyle"
 
             android:padding="5dp"
 
@@ -99,6 +103,7 @@
 
             android:text="Apply Text"
             android:fontFamily="@font/main_font"
+            android:textColor="@color/white"
 
             android:backgroundTint="@color/button_color"
             app:cornerRadius="10dp"
@@ -143,6 +148,9 @@
                 android:fontFamily="@font/main_font"
                 android:background="@drawable/white_box"
 
+                android:textColor="@color/black"
+                style="@style/CustomEditTextStyle"
+
                 android:padding="5dp"
                 android:layout_centerVertical="true"
                 android:gravity="center"
@@ -179,6 +187,9 @@
                 android:textSize="15sp"
                 android:fontFamily="@font/main_font"
                 android:background="@drawable/white_box"
+
+                android:textColor="@color/black"
+                style="@style/CustomEditTextStyle"
 
                 android:padding="5dp"
                 android:layout_toEndOf="@id/editHourMiniLabel"
@@ -240,6 +251,9 @@
                 android:fontFamily="@font/main_font"
                 android:background="@drawable/white_box"
 
+                android:textColor="@color/black"
+                style="@style/CustomEditTextStyle"
+
                 android:padding="10dp"
                 android:layout_centerVertical="true"
                 />
@@ -251,6 +265,7 @@
 
                 android:text="Apply Time"
                 android:fontFamily="@font/main_font"
+                android:textColor="@color/white"
 
                 android:layout_alignParentEnd="true"
                 android:backgroundTint="@color/button_color"
@@ -264,6 +279,7 @@
 
             android:text="Save All"
             android:fontFamily="@font/main_font"
+            android:textColor="@color/white"
 
             android:layout_marginTop="20dp"
             android:layout_below="@+id/deadlineLayout"

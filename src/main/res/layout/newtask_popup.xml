@@ -29,6 +29,9 @@
             android:textFontWeight="600"
             android:fontFamily="@font/main_font"
 
+            android:textColor="@color/black"
+            style="@style/CustomEditTextStyle"
+
             android:layout_below="@+id/taskPopupTitleLabel"
             android:background="@drawable/white_box"
             android:padding="7dp"
@@ -52,6 +55,9 @@
             android:id="@+id/taskPopupDescriptionInputField"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
+            android:textColor="@color/black"
+            style="@style/CustomEditTextStyle"
 
             android:layout_below="@+id/taskPopupDescriptionLabel"
             android:background="@drawable/white_box"

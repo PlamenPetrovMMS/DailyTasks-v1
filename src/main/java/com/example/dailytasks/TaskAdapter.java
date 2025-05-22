@@ -6,7 +6,9 @@ import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,6 +55,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         TextView itemTitleLabel, itemNotificationLabel, itemNotificationResult, itemDeadlineLabel, itemDeadlineResult;
         FloatingActionButton editButton, finishButton;
         RelativeLayout relativeLayout, itemLayout;
+
+        Logger logger;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -114,6 +118,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     @SuppressLint({"SetTextI18n", "NotifyDataSetChanged", "RecyclerView"})
     @Override
     public void onBindViewHolder(@NonNull TaskAdapter.ViewHolder holder, int position) {
+
         Task task = localDataSet.get(position);
 
         if(task.getDoneState()){
@@ -140,10 +145,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             openTaskEditDialog(task, position);
         });
 
-//        holder.getEditButton().setOnClickListener(v ->{
-//            openTaskEditDialog(task, position);
-//        });
-
         holder.getFinishButton().setOnClickListener(view -> {
             if (position >= 0 && position < localDataSet.size()) {
 
@@ -159,6 +160,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 DBHelper dbHelper = new DBHelper(CONTEXT);
                 dbHelper.updateTask(task);
 
+                stopCurrentTaskAlarm(task);
+
                 Toast.makeText(CONTEXT, "Task Done", Toast.LENGTH_SHORT).show();
 
                 dbHelper.close();
@@ -166,7 +169,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         });
     }
     public void openTaskEditDialog(Task task, int position){
-
         Dialog dialog = new Dialog(CONTEXT);
         dialog.setContentView(R.layout.taskedit_popup);
         Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.drawable.blue_box);
@@ -304,6 +306,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     @SuppressLint({"ScheduleExactAlarm", "ShortAlarm"})
     public void scheduleNotification(Task task){
         DBHelper dbHelper = new DBHelper(CONTEXT);
+
         if(task.isSending()){
             stopCurrentTaskAlarm(task);
             createNewTaskAlarm(task);
@@ -325,9 +328,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         long hourMillis = TimeUnit.HOURS.toMillis(hourCount);
         long minuteMillis = TimeUnit.MINUTES.toMillis(minuteCount);
 
+
         long intervalInMillis = hourMillis + minuteMillis;
 
-         long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
+        long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
 
         Intent intent = getAlarmIntent(task);
 
@@ -340,6 +344,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         NotificationReceiver.REQUEST_CODE++;
 
         AlarmManager alarmManager = (AlarmManager) CONTEXT.getSystemService(Context.ALARM_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager != null) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                CONTEXT.startActivity(settingsIntent);
+                return;
+            }
+        }
 
         if(alarmManager != null){
             alarmManager.setExactAndAllowWhileIdle(
@@ -355,9 +367,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         int taskId = Integer.parseInt(String.valueOf(task.getId()));
 
         AlarmManager alarmManager = (AlarmManager) CONTEXT.getSystemService(Context.ALARM_SERVICE);
-
         Intent intent = getAlarmIntent(task);
-
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 CONTEXT,
                 taskId,

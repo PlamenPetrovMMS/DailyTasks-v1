@@ -38,6 +38,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.Objects;
 import android.Manifest;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        Logger logger = new Logger(this);
 
         createNotificationChannel();
 
@@ -127,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
                 adapter.scheduleNotification(task);
             });
+
             cancelButton.setOnClickListener(v -> {
                 dialog.dismiss();
             });
@@ -145,14 +149,6 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void createNotificationChannel(){
-
-        NotificationReceiver receiver = new NotificationReceiver();
-        @SuppressLint("UnspecifiedRegisterReceiverFlag")
-        IntentFilter filter = new IntentFilter(NotificationReceiver.INTENT);
-        registerReceiver(receiver, filter);
-
-        // sendBroadcast(new Intent(NotificationReceiver.INTENT));
-
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             CharSequence name = "Task Channel";
             String description = "Channel for task notifications";
