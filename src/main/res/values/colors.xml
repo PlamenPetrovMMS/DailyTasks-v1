@@ -14,6 +14,8 @@
     <color name="blue_box_color">#6EACDA</color>
     <color name="bright_box_color">#E2E2B6</color>
 
+    <color name="transparent">#00000000</color>
+
     <color name="button_color">#021526</color>
 
 
