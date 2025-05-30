@@ -2,31 +2,42 @@ package com.example.dailytasks;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.w3c.dom.Text;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
@@ -37,6 +48,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private final String ITEM_DEADLINE_LABEL_TEXT = "Deadline: ";
     public static final String DEFAULT_HOURS = "1";
     public static final String DEFAULT_MINUTES = "00";
+    public static final String DATE_FORMAT = "dd.MM.yyyy";
 
 
     static SimpleDateFormat formatter = new SimpleDateFormat(Task.DATE_FORMAT, Locale.getDefault());
@@ -56,8 +68,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         FloatingActionButton editButton, finishButton;
         RelativeLayout relativeLayout, itemLayout;
 
-        Logger logger;
-
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -65,9 +75,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             itemLayout = (RelativeLayout) itemView.findViewById(R.id.itemLayout);
 
             itemTitleLabel = (TextView) itemView.findViewById(R.id.itemTaskTitleLabel);
-
-            itemNotificationLabel = (TextView) itemView.findViewById(R.id.itemNotificationLabel);
-            itemNotificationResult = (TextView) itemView.findViewById(R.id.itemNotificationResult);
 
             itemDeadlineLabel = (TextView) itemView.findViewById(R.id.itemDeadlineLabel);
             itemDeadlineResult = (TextView) itemView.findViewById(R.id.itemDeadlineResult);
@@ -128,11 +135,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.getItemView().setAlpha(1f);
         holder.getItemTitleLabelTextView().setText(task.getTitle());
 
-        holder.getItemNotificationResult().setText(String.format(
-                "%d " + (task.getNotificationHours() > 1 ? "hours" : "hour") + "  %d min",
-                task.getNotificationHours(),
-                task.getNotificationMinutes()));
-
         try{
             SimpleDateFormat formatter = new SimpleDateFormat(Task.DATE_FORMAT, Locale.getDefault());
             String stringDate = formatter.format(task.getDeadlineDate());
@@ -160,7 +162,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 DBHelper dbHelper = new DBHelper(CONTEXT);
                 dbHelper.updateTask(task);
 
-                stopCurrentTaskAlarm(task);
+                updateDoneTasksCount();
 
                 Toast.makeText(CONTEXT, "Task Done", Toast.LENGTH_SHORT).show();
 
@@ -168,27 +170,33 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
     }
+    public void updateDoneTasksCount(){
+        DBHelper dbHelper = new DBHelper(CONTEXT);
+        MainActivity.completedCount = dbHelper.getDoneTasksCount();
+        MainActivity.completedTasksResult.setText(String.valueOf(MainActivity.completedCount));
+        dbHelper.close();
+    }
     public void openTaskEditDialog(Task task, int position){
         Dialog dialog = new Dialog(CONTEXT);
         dialog.setContentView(R.layout.taskedit_popup);
         Objects.requireNonNull(dialog.getWindow()).setBackgroundDrawableResource(R.drawable.blue_box);
 
-        TextView titleTextView, descriptionTextView, sendAlertTextView, deadlineTextView;
-        EditText titleInput, descriptionInput, sendAlertHours, sendAlertMinutes, deadlineDate;
-        MaterialButton saveButton, applyTextButton, applyTimeButton;
+        EditText titleInput, descriptionInput, deadlineDate;
+        MaterialButton saveButton;
+        FloatingActionButton editTaskButton;
         ImageButton cancelButton;
 
         titleInput = dialog.findViewById(R.id.editTitleInput);
-
         descriptionInput = dialog.findViewById(R.id.editDescriptionMultiLine);
-
-        sendAlertHours = dialog.findViewById(R.id.editHourInput);
-        sendAlertMinutes = dialog.findViewById(R.id.editMinuteInput);
         deadlineDate = dialog.findViewById(R.id.editDeadlineInput);
 
-        saveButton = dialog.findViewById(R.id.editSaveAllButton);
-        applyTextButton = dialog.findViewById(R.id.editApplyTextButton);
-        applyTimeButton = dialog.findViewById(R.id.editApplyTimeButton);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            deadlineDate.setShowSoftInputOnFocus(false);
+        }
+
+        saveButton = dialog.findViewById(R.id.editSaveButton);
+        editTaskButton = dialog.findViewById(R.id.editTaskButton);
+        editTaskButton.setStateListAnimator(null);
         cancelButton = dialog.findViewById(R.id.editCloseButton);
 
         titleInput.setText(task.getTitle());
@@ -196,25 +204,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         // =========================================================================================
 
-        if(task.getNotificationHours() != Integer.parseInt(DEFAULT_HOURS)){
-            sendAlertHours.setText(String.valueOf(task.getNotificationHours()));
-        } else{
-            sendAlertHours.setHint(DEFAULT_HOURS);
-        }
-
-        if( task.getNotificationMinutes() != Integer.parseInt(DEFAULT_MINUTES)) {
-            sendAlertMinutes.setText(String.valueOf(task.getNotificationMinutes()));
-        }else{
-            sendAlertMinutes.setHint(DEFAULT_MINUTES);
-        }
-
         try {
             SimpleDateFormat formatter = new SimpleDateFormat(Task.DATE_FORMAT, Locale.getDefault());
             String taskDeadlineDate = formatter.format(task.getDeadlineDate());
             if (!taskDeadlineDate.equals(DEFAULT_DEADLINE)) {
                 deadlineDate.setText(taskDeadlineDate);
             }else{
-                deadlineDate.setHint(DEFAULT_DEADLINE);
+                deadlineDate.setText(DEFAULT_DEADLINE);
             }
         }catch (NullPointerException e){
             deadlineDate.setHint(DEFAULT_DEADLINE);
@@ -223,21 +219,24 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         // =========================================================================================
 
         saveButton.setOnClickListener(view -> {
-            task.setTitle(titleInput.getText().toString());
+            if(titleInput.getText().toString().trim().isEmpty()){
+                titleInput.setText(task.getTitle());
+            }else{
+                task.setTitle(titleInput.getText().toString());
+            }
+
             task.setDescription(descriptionInput.getText().toString());
-            task.setNotificationHours(!sendAlertHours.getText().toString().isEmpty() ? Integer.parseInt(sendAlertHours.getText().toString()) : Integer.parseInt(TaskAdapter.DEFAULT_HOURS));
-            task.setNotificationMinutes(!sendAlertMinutes.getText().toString().isEmpty() ? Integer.parseInt(sendAlertMinutes.getText().toString()) : Integer.parseInt(TaskAdapter.DEFAULT_MINUTES));
 
             if(!deadlineDate.getText().toString().isEmpty() && deadlineDate != null){
                 if(task.setDeadlineTime(deadlineDate.getText().toString(), CONTEXT) == Task.INVALID){
-                    deadlineDate.setHint(DEFAULT_DEADLINE);
+                    deadlineDate.setText(DEFAULT_DEADLINE);
                     return;
                 }
             }else{
                 task.setDeadlineTime(DEFAULT_DEADLINE, CONTEXT);
             }
 
-            scheduleNotification(task);
+            task.scheduleAlert(CONTEXT);
 
             localDataSet.set(position, task);
             notifyDataSetChanged();
@@ -247,48 +246,158 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             dialog.dismiss();
         });
 
-        applyTextButton.setOnClickListener(view -> {
-            DBHelper dbHelper = new DBHelper(CONTEXT);
-            task.setTitle(titleInput.getText().toString());
-            task.setDescription(descriptionInput.getText().toString());
+        editTaskButton.setOnClickListener(view -> {
+            Dialog editDialog = new Dialog(CONTEXT);
+            editDialog.setContentView(R.layout.edit_task);
+            Objects.requireNonNull(editDialog.getWindow()).setBackgroundDrawableResource(R.drawable.darkblue_box);
 
-            localDataSet.set(position, task);
-            notifyDataSetChanged();
+            EditText hourTextView, minuteTextView;
+            RadioGroup radioGroup;
+            RadioButton notificationRadioButton, alarmRadioButton;
 
-            dbHelper.updateTask(task);
-            dbHelper.close();
+            hourTextView = editDialog.findViewById(R.id.editTaskHourResult);
+            minuteTextView = editDialog.findViewById(R.id.editTaskMinuteResult);
 
-            Toast.makeText(CONTEXT, "Text applied", Toast.LENGTH_SHORT).show();
-        });
+            radioGroup = editDialog.findViewById(R.id.radioGroup);
+            notificationRadioButton = editDialog.findViewById(R.id.notificationRadioButton);
+            alarmRadioButton = editDialog.findViewById(R.id.alarmRadioButton);
 
-        applyTimeButton.setOnClickListener(view -> {
-            DBHelper dbHelper = new DBHelper(CONTEXT);
-
-            task.setNotificationHours(!sendAlertHours.getText().toString().isEmpty() ? Integer.parseInt(sendAlertHours.getText().toString()) : Integer.parseInt(TaskAdapter.DEFAULT_HOURS));
-            task.setNotificationMinutes(!sendAlertMinutes.getText().toString().isEmpty() ? Integer.parseInt(sendAlertMinutes.getText().toString()) : Integer.parseInt(TaskAdapter.DEFAULT_MINUTES));
-
-            if(!deadlineDate.getText().toString().isEmpty() && deadlineDate != null){
-                if(task.setDeadlineTime(deadlineDate.getText().toString(), CONTEXT) == Task.INVALID){
-                    deadlineDate.setHint(DEFAULT_DEADLINE);
-                    return;
-                }
-            }else{
-                task.setDeadlineTime(DEFAULT_DEADLINE, CONTEXT);
+            switch(task.getAlertType()){
+                case Task.NOTIFICATION_TAG:
+                    notificationRadioButton.setChecked(true);
+                    break;
+                case Task.ALARM_TAG:
+                    alarmRadioButton.setChecked(true);
+                    break;
+                default:
+                    break;
             }
 
-            scheduleNotification(task);
+            hourTextView.setText(String.valueOf(task.getNotificationHours()));
+            minuteTextView.setText(String.valueOf(task.getNotificationMinutes()));
 
-            localDataSet.set(position, task);
-            notifyDataSetChanged();
+            hourTextView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if(hasFocus){
+                        hourTextView.setText("");
+                    }
+                }
+            });
 
-            dbHelper.updateTask(task);
-            dbHelper.close();
+            minuteTextView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                    @Override
+                    public void onFocusChange(View v, boolean hasFocus) {
+                        if(hasFocus){
+                            minuteTextView.setText("");
+                        }
+                    }
+            });
 
-            Toast.makeText(CONTEXT, "Time applied", Toast.LENGTH_SHORT).show();
+            editDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+
+                    String hourInput = hourTextView.getText().toString().trim();
+                    String minuteInput = minuteTextView.getText().toString().trim();
+
+                    int hours, minutes;
+
+                    try{
+                        hours = Integer.parseInt(hourInput);
+                        minutes = Integer.parseInt(minuteInput);
+                    }catch (NumberFormatException e){
+                        hours = Integer.parseInt(DEFAULT_HOURS);
+                        minutes = Integer.parseInt(DEFAULT_MINUTES);
+                    }
+                    if(hours < 5){
+                        if(minutes > 59){
+                            while(minutes > 59){
+                                hours++;
+                                minutes -= 60;
+                            }
+                            if(hours >= 5){
+                                hours = 5;
+                                minutes = 0;
+                            }
+                        }
+                        if(minutes == 0 && hours == 0){
+                            minutes = 1;
+                            Toast.makeText(CONTEXT, "Minimum 1 minute", Toast.LENGTH_SHORT).show();
+                        }
+                    }else{
+                        hours = 5;
+                        minutes = 0;
+                        Toast.makeText(CONTEXT, "Maximum 5 hours", Toast.LENGTH_SHORT).show();
+                    }
+                    task.setNotificationHours(hours);
+                    task.setNotificationMinutes(minutes);
+                    task.scheduleAlert(CONTEXT);
+
+                    hourTextView.setText(String.valueOf(hours));
+                    if(hours == 5){
+                        Toast.makeText(CONTEXT, "Alarm every 5 hours", Toast.LENGTH_SHORT).show();
+                    }else{
+                        if(minutes != 0 && hours > 0){
+                            Toast.makeText(CONTEXT, String.format("Alarm every %d " + (hours > 1 ? "hours" : "hour") + " %d " + (minutes > 1 ? "minutes" : "minute"), hours, minutes), Toast.LENGTH_SHORT).show();
+                        }else if(minutes != 0 && hours == 0){
+                            Toast.makeText(CONTEXT, String.format("Alarm every %d " + (minutes > 1 ? "minutes" : "minute"), minutes), Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(CONTEXT, String.format("Alarm every %d " + (hours > 1 ? "hours" : "hour"), hours), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+
+            radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
+
+                    DBHelper dbHelper = new DBHelper(CONTEXT);
+                    RadioButton button = editDialog.findViewById(checkedId);
+
+                    task.setAlertType(button.getText().toString());
+                    Toast.makeText(CONTEXT, "Alert type: " + task.getAlertType(), Toast.LENGTH_SHORT).show();
+
+                    dbHelper.updateTask(task);
+                    dbHelper.close();
+                }
+            });
+
+            editDialog.show();
         });
 
         cancelButton.setOnClickListener(view ->{
             dialog.dismiss();
+        });
+
+        deadlineDate.setOnClickListener(view -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.getDefault());
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    CONTEXT,
+                    (v, selectedYear, selectedMonth, selectedDay) -> {
+                        calendar.set(Calendar.YEAR, selectedYear);
+                        calendar.set(Calendar.MONTH, selectedMonth);
+                        calendar.set(Calendar.DAY_OF_MONTH, selectedDay);
+                        if(calendar.getTimeInMillis() < System.currentTimeMillis()){
+                            deadlineDate.setText(DEFAULT_DEADLINE);
+                            Toast.makeText(CONTEXT, "Old date", Toast.LENGTH_SHORT).show();
+                        }else{
+                            deadlineDate.setText(dateFormat.format(calendar.getTime()));
+                        }
+                    },
+                    year,
+                    month,
+                    day
+                    );
+
+            datePickerDialog.show();
         });
 
         dialog.show();
@@ -303,83 +412,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         localDataSet = newData;
     }
 
-    @SuppressLint({"ScheduleExactAlarm", "ShortAlarm"})
-    public void scheduleNotification(Task task){
-        DBHelper dbHelper = new DBHelper(CONTEXT);
-
-        if(task.isSending()){
-            stopCurrentTaskAlarm(task);
-            createNewTaskAlarm(task);
-            Log.d("TaskAdapter", "Task alarm was edited");
-        }else{
-            Log.d("TaskAdapter", "Creating first alarm");
-            createNewTaskAlarm(task);
-        }
-
-        task.setSendingState(true);
-        dbHelper.updateTask(task);
-        dbHelper.close();
-    }
-    @SuppressLint("ScheduleExactAlarm")
-    private void createNewTaskAlarm(Task task){
-        int hourCount = task.getNotificationHours();
-        int minuteCount = task.getNotificationMinutes();
-
-        long hourMillis = TimeUnit.HOURS.toMillis(hourCount);
-        long minuteMillis = TimeUnit.MINUTES.toMillis(minuteCount);
 
 
-        long intervalInMillis = hourMillis + minuteMillis;
 
-        long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
 
-        Intent intent = getAlarmIntent(task);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                CONTEXT,
-                NotificationReceiver.REQUEST_CODE,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-        NotificationReceiver.REQUEST_CODE++;
-
-        AlarmManager alarmManager = (AlarmManager) CONTEXT.getSystemService(Context.ALARM_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager != null) {
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                CONTEXT.startActivity(settingsIntent);
-                return;
-            }
-        }
-
-        if(alarmManager != null){
-            alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-            );
-        }
-
-        Log.d("TaskAdapter", "Setting alarm for task at " + triggerTime + " (interval: " + intervalInMillis + ")");
-    }
-    private void stopCurrentTaskAlarm(Task task){
-        int taskId = Integer.parseInt(String.valueOf(task.getId()));
-
-        AlarmManager alarmManager = (AlarmManager) CONTEXT.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = getAlarmIntent(task);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                CONTEXT,
-                taskId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-        alarmManager.cancel(pendingIntent);
-        Log.d("NotificationReceiver", "Task is done. Alarm cancelled.");
-    }
-    private Intent getAlarmIntent(Task task){
-        Intent intent = new Intent(CONTEXT, NotificationReceiver.class);
-        intent.putExtra("task_id", String.valueOf(task.getId()));
-        return intent;
-    }
 }

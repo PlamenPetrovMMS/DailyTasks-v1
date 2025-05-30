@@ -33,8 +33,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
 
+        android:layout_above="@+id/createNewTaskButton"
+
         android:layout_below="@+id/appNameTitle"
         android:layout_marginHorizontal="5dp"
+        android:layout_marginBottom="10dp"
         />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -49,9 +52,47 @@
 
         android:backgroundTint="@color/button_color"
         android:src="@drawable/baseline_add_24"
-        app:tint="@color/white"
-        />
+        app:fabCustomSize="70dp"
+        app:tint="@color/white" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="20dp"
+        >
+        <TextView
+            android:id="@+id/completedLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="Completed:"
+            android:textSize="20sp"
+            android:fontFamily="@font/main_font"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+
+            />
+        <TextView
+            android:id="@+id/completedResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="10"
+            android:textSize="20sp"
+            android:fontFamily="@font/main_font"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+
+            android:layout_toEndOf="@+id/completedLabel"
+            android:layout_marginStart="10dp"
+
+            />
+    </RelativeLayout>
 
 
 </RelativeLayout>

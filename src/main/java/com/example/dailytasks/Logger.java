@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,88 +22,131 @@ import java.util.Locale;
 
 public class Logger {
     public static final String FILE_NAME = "dailyTasksLog.txt";
-    private final File logFile;
-    private Context context;
+    private final Context context;
 
+
+    // ========== URIs ==========
+    private Uri fileUri;
+    private Uri queryUri;
+
+
+    // ========== SELECTION ==========
+    String selection;
+    String[] selectionArgs;
+
+    // ========== RELATIVE PATH ==========
+    String relativePath;
+
+
+    // ========== CONSTRUCTOR ===========
     public  Logger(Context context){
         this.context = context;
-        File docsDir = new File(context.getFilesDir(), "log");
-        if(docsDir == null){
-            throw new RuntimeException("Unable to access documents directory");
-        }
-
-        logFile = new File(docsDir, FILE_NAME);
-        if(!logFile.exists()){
-            try{
-                if(!logFile.createNewFile()){
-                    Log.e("Logger", "Failed to create log file");
-                }
-            }catch (Exception e){
-                Log.e("Exception", "Exception while creating the file");
-            }
-        }
-
+        loadFileUri();
     }
 
-    public void log(String message){
-        // The file name and relative path
-        String relativePath = "Documents/";
-
-        Uri queryUri = MediaStore.Files.getContentUri("external");
-        String selection = MediaStore.MediaColumns.DISPLAY_NAME + " = ? AND " +
-                MediaStore.MediaColumns.RELATIVE_PATH + " = ?";
-        String[] selectionArgs = new String[]{FILE_NAME, relativePath};
-
-        Uri fileUri = null;
-
-        // Check if file already exists
-        try (Cursor cursor = context.getContentResolver().query(queryUri, null, selection, selectionArgs, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                // File exists, get its URI
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID));
-                fileUri = ContentUris.withAppendedId(queryUri, id);
-
-                // Open the file in append mode ("wa")
+    // ========== LOG ==========
+    public void log(String sender, String message){
+        try {
+            if (fileUri != null) {
+                // Append to existing file
                 try (OutputStream outputStream = context.getContentResolver().openOutputStream(fileUri, "wa")) {
                     if (outputStream != null) {
-                        outputStream.write(message.getBytes());
+                        StringBuilder stringBuilder = new StringBuilder();
+                        stringBuilder.append(sender).append("\t").append(message).append("\n");
+                        outputStream.write(stringBuilder.toString().getBytes());
                         outputStream.flush();
-                        System.out.println("Appended to existing file.");
+                        Log.d("Logger", "Appended to log file.");
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-                return;
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Create new file
+                createNewLogFile();
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("Logger", "Error writing to log file");
+        }
+    }
+
+    private void loadFileUri(){
+
+        relativePath = "Documents/";
+        selection = MediaStore.MediaColumns.DISPLAY_NAME + " = ? AND " + MediaStore.MediaColumns.RELATIVE_PATH + " = ?";
+        selectionArgs = new String[]{FILE_NAME, relativePath};
+        queryUri = MediaStore.Files.getContentUri("external");
+        fileUri = null;
+
+
+
+        try (Cursor cursor = context.getContentResolver().query(queryUri, null, selection, selectionArgs, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID));
+                fileUri = ContentUris.withAppendedId(queryUri, id);
+                Log.d("Logger", "File Uri was found");
+
+            }else {
+
+                Log.e("Logger", "File not found with name: " + FILE_NAME + " in path: " + relativePath);
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, FILE_NAME);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath);
+
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+
+                    fileUri = context.getContentResolver().insert(queryUri, values);
+
+                    if(fileUri == null){
+                        Log.e("Logger", "Error creating File Uri");
+                    }else{
+                        Log.d("Logger", "File Uri was created");
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void clearLogFile() {
+
+        if (fileUri == null) {
+            Log.e("Logger", "File URI is null");
+            return;
         }
 
-        // If file doesn't exist, create a new one
+        try (OutputStream outputStream = context.getContentResolver().openOutputStream(fileUri, "rwt")) {
+            if (outputStream != null) {
+                outputStream.write("".getBytes());
+                outputStream.flush();
+                Log.d("Logger", "Log file was reset");
+            } else {
+                Log.e("Logger", "OutputStream is null");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createNewLogFile(){
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, FILE_NAME);
         values.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
         values.put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Uri uri = context.getContentResolver().insert(queryUri, values);
-            if (uri != null) {
-                try (OutputStream outputStream = context.getContentResolver().openOutputStream(uri)) {
-                    if (outputStream != null) {
-                        outputStream.write(message.getBytes());
-                        outputStream.flush();
-                        System.out.println("Created new file and wrote message.");
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+        Uri newUri = context.getContentResolver().insert(queryUri, values);
+        if (newUri != null) {
+            try (OutputStream outputStream = context.getContentResolver().openOutputStream(newUri)) {
+                if (outputStream != null) {
+                    outputStream.write("".getBytes());
+                    outputStream.flush();
+                    Log.d("Logger", "Created and wrote to log file.");
                 }
+            }catch (IOException e) {
+                e.printStackTrace();
+                Log.e("Logger", "Creating new log file failed");
             }
         }
-
     }
-
-    public File getLogFile(){
-        return logFile;
-    }
-
-
-
 }

@@ -50,6 +50,8 @@
 
             android:padding="5dp"
             android:layout_below="@id/editTitleLabel"
+            android:layout_alignStart="@+id/editTitleLabel"
+            android:layout_alignEnd="@+id/editDeadlineLabel"
 
             android:inputType="text"
             android:singleLine="true"
@@ -92,131 +94,10 @@
 
             android:layout_below="@id/editDescriptionLabel"
             android:layout_alignStart="@+id/editTitleInput"
-            android:layout_alignEnd="@+id/editTitleInput"
+            android:layout_alignEnd="@+id/editDeadlineLabel"
 
             android:maxLines="5"
             />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/editApplyTextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-
-            android:text="Apply Text"
-            android:fontFamily="@font/main_font"
-            android:textColor="@color/white"
-
-            android:backgroundTint="@color/button_color"
-            app:cornerRadius="10dp"
-
-            android:layout_marginTop="10dp"
-            android:layout_below="@+id/editDescriptionMultiLine"
-            android:layout_alignParentEnd="true"
-            />
-
-
-
-        <TextView
-            android:id="@+id/editSendAlertLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:text="Send Alert"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textFontWeight="900"
-            android:textColor="@color/white"
-            android:fontFamily="@font/main_font"
-
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="5dp"
-            android:layout_below="@id/editDescriptionMultiLine"
-            />
-        <RelativeLayout
-            android:id="@+id/editSendAlertLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:layout_below="@+id/editSendAlertLabel">
-            <EditText
-                android:id="@+id/editHourInput"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:ems="2"
-                android:inputType="number"
-
-                android:textSize="15sp"
-                android:fontFamily="@font/main_font"
-                android:background="@drawable/white_box"
-
-                android:textColor="@color/black"
-                style="@style/CustomEditTextStyle"
-
-                android:padding="5dp"
-                android:layout_centerVertical="true"
-                android:gravity="center"
-
-                android:maxLength="2"
-                android:singleLine="true"
-                />
-            <TextView
-                android:id="@+id/editHourMiniLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                android:text="hours"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textFontWeight="900"
-                android:textColor="@color/white"
-                android:fontFamily="@font/main_font"
-
-                android:layout_toEndOf="@id/editHourInput"
-                android:layout_alignBottom="@id/editHourInput"
-
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="10dp"
-
-                />
-            <EditText
-                android:id="@+id/editMinuteInput"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="2"
-                android:inputType="number"
-
-                android:textSize="15sp"
-                android:fontFamily="@font/main_font"
-                android:background="@drawable/white_box"
-
-                android:textColor="@color/black"
-                style="@style/CustomEditTextStyle"
-
-                android:padding="5dp"
-                android:layout_toEndOf="@id/editHourMiniLabel"
-                android:gravity="center"
-                android:layout_alignTop="@+id/editHourInput"
-                android:layout_alignBottom="@+id/editHourInput"
-
-                android:maxLength="2"
-                android:singleLine="true"
-                />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                android:text="minutes"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textFontWeight="900"
-                android:textColor="@color/white"
-                android:fontFamily="@font/main_font"
-
-                android:layout_toEndOf="@+id/editMinuteInput"
-                android:layout_alignBottom="@id/editMinuteInput"
-
-                android:layout_marginStart="5dp"
-                />
-        </RelativeLayout>
 
 
         <TextView
@@ -231,7 +112,7 @@
             android:textColor="@color/white"
             android:fontFamily="@font/main_font"
 
-            android:layout_below="@+id/editSendAlertLayout"
+            android:layout_below="@+id/editDescriptionMultiLine"
             android:layout_marginTop="10dp"
             />
         <RelativeLayout
@@ -247,7 +128,12 @@
                 android:ems="5"
                 android:inputType="date"
 
+                android:focusable="false"
+                android:cursorVisible="false"
+                android:clickable="true"
+
                 android:textSize="15sp"
+                android:textStyle="bold"
                 android:fontFamily="@font/main_font"
                 android:background="@drawable/white_box"
 
@@ -258,26 +144,27 @@
                 android:layout_centerVertical="true"
                 />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/editApplyTimeButton"
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/editTaskButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                android:text="Apply Time"
-                android:fontFamily="@font/main_font"
-                android:textColor="@color/white"
-
                 android:layout_alignParentEnd="true"
                 android:backgroundTint="@color/button_color"
-                app:cornerRadius="10dp"
-                />
+
+                android:src="@drawable/baseline_settings_24"
+                app:fabCustomSize="45dp"
+                app:tint="@color/white"
+
+                android:layout_centerHorizontal="true"/>
+
         </RelativeLayout>
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/editSaveAllButton"
+            android:id="@+id/editSaveButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
 
-            android:text="Save All"
+            android:text="Save"
             android:fontFamily="@font/main_font"
             android:textColor="@color/white"
 

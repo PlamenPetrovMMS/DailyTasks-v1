@@ -1,6 +1,15 @@
 package com.example.dailytasks;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.os.SystemClock;
+import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.text.ParseException;
@@ -10,11 +19,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class Task {
 
+    public static final String NOTIFICATION_TAG = "Notification";
+    public static final String ALARM_TAG = "Alarm";
+
+
     public static final int VALID = 0;
     public static final int INVALID = 1;
+    public static int NEXT_ID = 0;
     public static final String DATE_FORMAT = "dd.MM.yyyy";
 
     long id;
@@ -33,6 +48,7 @@ public class Task {
     Date deadlineDate; // deadline should also be editable, again, in time format
 
     Map<String, Integer> dateTimeMap;
+    String alertType;
 
     public Task(){
         dateTimeMap = new HashMap<>();
@@ -44,6 +60,8 @@ public class Task {
         createdDate = new Date(currentTimeMillis);
         deadlineDate = new Date(currentTimeMillis);
 
+        alertType = NOTIFICATION_TAG;
+
         loadDateTimeMap();
     }
     public Task(String title, String description){
@@ -51,21 +69,25 @@ public class Task {
         this.title = title;
         this.description = description;
         done = false;
+
         currentTimeMillis = System.currentTimeMillis();
         createdDate = new Date(currentTimeMillis);
         deadlineDate = new Date(currentTimeMillis);
+
+        alertType = NOTIFICATION_TAG;
+
         loadDateTimeMap();
     }
 
 
     public void setId(long id){
-        if(id == Utils.NEXT_ID){
-            Utils.NEXT_ID++;
+        if(id == NEXT_ID){
+            NEXT_ID++;
         }
         this.id = id;
     }
     public void setNextId(){
-        Utils.NEXT_ID++;
+        NEXT_ID++;
     }
     public void setTitle(String title){
         this.title = title;
@@ -92,11 +114,9 @@ public class Task {
 
             Date defaultDate = formatter.parse(TaskAdapter.DEFAULT_DEADLINE);
             if(this.deadlineDate.before(defaultDate)){
-                Toast.makeText(context, "Old date", Toast.LENGTH_SHORT).show();
                 this.deadlineDate = new Date(System.currentTimeMillis());
                 return INVALID;
             }
-
             return VALID;
         }catch (ParseException pe){
             Toast.makeText(context, "Invalid date", Toast.LENGTH_SHORT).show();
@@ -119,7 +139,9 @@ public class Task {
     public void setCurrentTimeMillis(long millis){
         currentTimeMillis = millis;
     }
-
+    public void setAlertType(String type){
+        alertType = type;
+    }
 
 
 
@@ -154,6 +176,9 @@ public class Task {
     public int getNotificationMinutes(){
         return notificationMinutes;
     }
+    public String getAlertType(){
+        return alertType;
+    }
 
 
 
@@ -181,6 +206,111 @@ public class Task {
         return formatter.format(createdDate);
     }
 
+    @SuppressLint("InvalidWakeLockTag")
+    public void scheduleAlert(Context context){
+        DBHelper dbHelper = new DBHelper(context);
+
+        if(isSending()) {
+            stopAlarmManager(context);
+        }
+        createNewAlert(context);
+
+        dbHelper.updateTask(this);
+        dbHelper.close();
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private void createNewAlert(Context context){
+        int hourCount = getNotificationHours();
+        int minuteCount = getNotificationMinutes();
+
+        long hourMillis = TimeUnit.HOURS.toMillis(hourCount);
+        long minuteMillis = TimeUnit.MINUTES.toMillis(minuteCount);
 
 
+        long intervalInMillis = hourMillis + minuteMillis;
+
+        long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
+
+        Intent intent = getIntent(context);
+        if(intent == null) return;
+
+
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                NotificationReceiver.REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        if(getAlertType().equals(NOTIFICATION_TAG)) NotificationReceiver.REQUEST_CODE++;
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager != null) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                context.startActivity(settingsIntent);
+                return;
+            }
+        }
+
+        if(alarmManager != null){
+            switch(getAlertType()){
+                case NOTIFICATION_TAG:
+                    alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                            triggerTime,
+                            pendingIntent
+                    );
+                    Log.d("Task", "Setting notification for task at " + triggerTime + " (interval: " + intervalInMillis + ")");
+                    break;
+                case ALARM_TAG:
+                    alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerTime,
+                            pendingIntent
+                    );
+                    Log.d("Task", "Setting alarm for task at " + triggerTime + " (interval: " + intervalInMillis + ")");
+                    break;
+                default:
+                    Log.e("Task", "Failed to create alarm manager");
+            }
+        }
+    }
+    private void stopAlarmManager(Context context){
+        int taskId = Integer.parseInt(String.valueOf(getId()));
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = getIntent(context);
+        if(intent == null) return;
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                taskId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        alarmManager.cancel(pendingIntent);
+        Log.d("NotificationReceiver", "Task is done. Alarm cancelled.");
+    }
+
+    private Intent getIntent(Context context){
+        Intent intent;
+        switch(getAlertType()){
+            case Task.NOTIFICATION_TAG:
+                intent = new Intent(context, NotificationReceiver.class);
+                break;
+            case Task.ALARM_TAG:
+                intent = new Intent(context, AlarmReceiver.class);
+                break;
+            default:
+                Log.e("Task", "getIntent() didn't create any intent");
+                return null;
+        }
+        intent.putExtra(DBHelper.COLUMN_ID, String.valueOf(getId()));
+        return intent;
+    }
 }
