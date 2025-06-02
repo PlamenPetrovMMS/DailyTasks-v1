@@ -1,29 +1,26 @@
 package com.example.dailytasks;
 
 import android.annotation.SuppressLint;
-import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Layout;
+import android.provider.Settings;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,27 +39,41 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final int REQUEST_CODE = 100;
+
     NotificationReceiver receiver;
     FloatingActionButton createButton;
     RecyclerView recyclerView;
     TaskAdapter adapter;
+    public static TextView completedTasksResult;
+    public static Context CONTEXT;
+    public static Logger LOGGER;
+    public static int completedCount;
 
     ArrayList<Task> taskList = new ArrayList<>();
+    private boolean isPermissionDialogShowing = false;
+
 
 
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        Logger logger = new Logger(this);
+        CONTEXT = getApplicationContext();
+        LOGGER = new Logger(this);
+        LOGGER.log("", "\n\n\n");
+//        LOGGER.clearLogFile();
 
         createNotificationChannel();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
+
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        REQUEST_CODE);
+
             }
         }
 
@@ -76,11 +87,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DBHelper dbHelper = new DBHelper(this);
+//        dbHelper.deleteDatabase(); // reset database
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new TaskAdapter(this, taskList);
         recyclerView.setAdapter(adapter);
+
+        completedTasksResult = findViewById(R.id.completedResult);
+        completedCount = dbHelper.getDoneTasksCount();
+        completedTasksResult.setText(String.valueOf(completedCount));
 
         createButton = findViewById(R.id.createNewTaskButton);
         createButton.setStateListAnimator(null);
@@ -99,14 +115,10 @@ public class MainActivity extends AppCompatActivity {
             window.setAttributes(params);
             window.setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-            TextView titleLabel, descriptionLabel;
             EditText titleInput, descriptionInput;
             FloatingActionButton addButton, cancelButton;
 
-            titleLabel = dialog.findViewById(R.id.taskPopupTitleLabel);
             titleInput = dialog.findViewById(R.id.taskPopupTitleInputField);
-
-            descriptionLabel = dialog.findViewById(R.id.taskPopupDescriptionLabel);
             descriptionInput = dialog.findViewById(R.id.taskPopupDescriptionInputField);
 
             addButton = dialog.findViewById(R.id.taskPopupAddButton);
@@ -128,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
                 dialog.dismiss();
 
-                adapter.scheduleNotification(task);
+                task.scheduleAlert(this);
             });
 
             cancelButton.setOnClickListener(v -> {
@@ -137,13 +149,42 @@ public class MainActivity extends AppCompatActivity {
 
             dialog.show();
         });
-    } // onCreate ends here ======
+    } // onCreate ends here =====
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults, int deviceId) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId);
+
+        if(requestCode == REQUEST_CODE){
+            if((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)){
+                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
+                finishAffinity(); // close this and all parent activities
+                System.exit(0);
+            }
+        }
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if(receiver != null){
             unregisterReceiver(receiver);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        isPermissionDialogShowing = false;
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            if(ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED && !isPermissionDialogShowing){
+
+                showPermissionNotGrantedDialog();
+            }
         }
     }
 
@@ -166,10 +207,34 @@ public class MainActivity extends AppCompatActivity {
         for(Task task: dbHelper.getAllTasks()){
             if(!task.getDoneState()){
                 taskList.add(task);
+                task.checkUntilDeadline(CONTEXT);
             }
         }
 
     }
+
+    private void showPermissionNotGrantedDialog() {
+
+        isPermissionDialogShowing = true;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Permission Required")
+                .setMessage("This app needs notification permission to work. Please allow it from Settings.")
+                .setPositiveButton("Go to Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    Toast.makeText(this, "Permission denied.", Toast.LENGTH_SHORT).show();
+                    finishAffinity();
+                    System.exit(0);
+                })
+                .setCancelable(false)
+                .show();
+    }
+
 
 
 } // MainActivity ends here ======

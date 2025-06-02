@@ -26,15 +26,8 @@ import java.util.concurrent.TimeUnit;
 public class NotificationReceiver extends BroadcastReceiver {
     public static int REQUEST_CODE = 0;
     public static final String CHANNEL_ID = "TASK";
-    public static final String INTENT = "TASK_NOTIFICATION";
-
-
-
     private static int notificationId = 0;
-    private AlarmManager alarmManager;
     private Context CONTEXT;
-    private int taskId;
-    private Intent alarmIntent;
 
 
 
@@ -43,73 +36,54 @@ public class NotificationReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d("NotificationReceiver", "Notification triggered at: " + SystemClock.elapsedRealtime());
-        CONTEXT = context;
 
+        CONTEXT = context;
         DBHelper dbHelper = new DBHelper(context);
 
-        taskId = Integer.parseInt(intent.getExtras().get("task_id").toString());
+        int taskId = Integer.parseInt(intent.getExtras().get(DBHelper.COLUMN_ID).toString());
         Task task = dbHelper.getTask(taskId);
 
         String groupKey = "task_group_" + task.getId();
 
-        alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmIntent = new Intent(context, NotificationReceiver.class);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent alarmIntent = new Intent(context, NotificationReceiver.class);
 
-        // Cancel alarm scheduler
-        if(task.getId() != -1 && dbHelper.isTaskDone(task.getId())){
-            stopAlarmManager(alarmManager, CONTEXT, taskId, alarmIntent);
+        // Check if task is done
+        if(task.getId() != -1 && dbHelper.isTaskDone(taskId)){
+            // Cancel alarm scheduler
+            stopAlarmManager(alarmManager, taskId, alarmIntent);
+            return;
         }else{
             // Create next alarm
-            long hourMillis = TimeUnit.HOURS.toMillis(task.getNotificationHours());
-            long minuteMillis = TimeUnit.MINUTES.toMillis(task.getNotificationMinutes());
-
-            long intervalInMillis = hourMillis + minuteMillis;
-
-            alarmIntent = new Intent(context, NotificationReceiver.class);
-            alarmIntent.putExtra("task_id", String.valueOf(task.getId()));
-
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    context,
-                    taskId,
-                    alarmIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
-            if(alarmManager != null){
-                alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                );
-            }
-            Log.d("AlarmScheduler", "Setting alarm for task at " + triggerTime + " (interval: " + intervalInMillis + ")");
-        }
-        // Check for permission
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            Activity activity = (Activity) context;
-            ActivityCompat.requestPermissions(activity , new String[]{
-                    Manifest.permission.POST_NOTIFICATIONS
-            }, REQUEST_CODE);
-            return;
+            createNextAlert(task, alarmManager);
         }
 
+        showNotification(task, groupKey);
+
+    } // onReceive ends here ==============
+
+    private void showNotification(Task task, String groupKey){
         // Create notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(CONTEXT, CHANNEL_ID)
                 .setSmallIcon(R.drawable.dt_logo)
                 .setContentTitle(task.getTitle())
                 .setContentText(task.getDescription())
                 .setGroup(groupKey)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(CONTEXT);
+
+        // Check for permission
+        if(checkPermission()) return;
 
         // Notify the device with single notification
         notificationManager.notify(notificationId, builder.build());
+
+        // Change id for next notification to avoid overriding
         notificationId++;
 
-        // Create notification summary
-        Notification notificationSummary = new NotificationCompat.Builder(context, CHANNEL_ID)
+        // Create summary
+        Notification notificationSummary = new NotificationCompat.Builder(CONTEXT, CHANNEL_ID)
                 .setSmallIcon(R.drawable.dt_logo)
                 .setContentTitle("DailyTasks")
                 .setContentText("You have multiple tasks for today!")
@@ -118,21 +92,58 @@ public class NotificationReceiver extends BroadcastReceiver {
                 .build();
 
         // Notify the device with the summary
-        notificationManager.notify(taskId + 1000, notificationSummary);
+        notificationManager.notify((int) task.getId() + 1000, notificationSummary);
+    }
+    private boolean checkPermission(){
+        if (ActivityCompat.checkSelfPermission(CONTEXT, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            Intent requestIntent = new Intent(CONTEXT, PermissionRequestActivity.class);
+            requestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            CONTEXT.startActivity(requestIntent);
+            return false;
+        }
+        return true;
+    }
 
-    } // onReceive ends here ==============
-
-    public static void stopAlarmManager(AlarmManager alarmManager, Context context, int taskId, Intent alarmIntent){
+    public void stopAlarmManager(AlarmManager alarmManager, int taskId, Intent alarmIntent){
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context,
+                CONTEXT,
                 taskId,
                 alarmIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         alarmManager.cancel(pendingIntent);
         Log.d("NotificationReceiver", "Task is done. Alarm cancelled.");
-        return;
     }
 
+    @SuppressLint("ScheduleExactAlarm")
+    private void createNextAlert(Task task, AlarmManager alarmManager){
+
+        int taskId = (int) task.getId();
+
+        long hourMillis = TimeUnit.HOURS.toMillis(task.getNotificationHours());
+        long minuteMillis = TimeUnit.MINUTES.toMillis(task.getNotificationMinutes());
+
+        long intervalInMillis = hourMillis + minuteMillis;
+
+        Intent alarmIntent = new Intent(CONTEXT, NotificationReceiver.class);
+        alarmIntent.putExtra("task_id", String.valueOf(task.getId()));
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                CONTEXT,
+                taskId,
+                alarmIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        long triggerTime = SystemClock.elapsedRealtime() + intervalInMillis;
+        if(alarmManager != null){
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+            );
+        }
+        Log.d("NotificationReceiver", "Setting notification for task at " + triggerTime + " (interval: " + intervalInMillis + ")");
+    }
 } // NotificationReceiver ends here =======
 

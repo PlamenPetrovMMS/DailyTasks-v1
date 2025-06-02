@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -24,6 +25,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_DEADLINE = "task_deadline";
     public static final String COLUMN_NOTIFICATION_HOURS = "task_notify_hours";
     public static final String COLUMN_NOTIFICATION_MINUTES = "task_notify_mins";
+    public static final String COLUMN_ALERT_TYPE = "alert_type";
 
 
     public static final String COLUMN_DESCRIPTION = "description";
@@ -48,7 +50,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 COLUMN_CREATED_DATE + " TEXT," +
                 COLUMN_MILLIS + " LONG," +
                 COLUMN_NOTIFICATION_HOURS + " INTEGER," +
-                COLUMN_NOTIFICATION_MINUTES + " INTEGER" +
+                COLUMN_NOTIFICATION_MINUTES + " INTEGER," +
+                COLUMN_ALERT_TYPE + " TEXT" +
                 ")";
         db.execSQL(CREATE_TABLE);
     }
@@ -200,6 +203,19 @@ public class DBHelper extends SQLiteOpenHelper {
         return done;
     }
 
+    @SuppressLint("Range")
+    public int getDoneTasksCount(){
+        int count = 0;
+        SQLiteDatabase database = this.getReadableDatabase();
+        Cursor cursor = database.rawQuery("SELECT " + COLUMN_DONE + " FROM " + TABLE_NAME, new String[]{});
+        while(cursor.moveToNext()){
+            if(cursor.getInt(cursor.getColumnIndex(COLUMN_DONE)) == 1){
+                count++;
+            }
+        }
+        return count;
+    }
+
     public void setTaskDone(int id, boolean isDone){
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -233,5 +249,13 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_MILLIS, task.getCurrentTimeMillis());
         values.put(COLUMN_NOTIFICATION_HOURS, task.getNotificationHours());
         values.put(COLUMN_NOTIFICATION_MINUTES, task.getNotificationMinutes());
+        values.put(COLUMN_ALERT_TYPE, task.getAlertType());
+    }
+
+    public void deleteDatabase(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
+        Toast.makeText(CONTEXT, "Database reset", Toast.LENGTH_SHORT).show();
     }
 }

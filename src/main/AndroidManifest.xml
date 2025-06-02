@@ -4,7 +4,8 @@
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
@@ -22,6 +23,10 @@
         android:theme="@style/Theme.DailyTasks"
         tools:targetApi="31">
         <activity
+            android:name=".AlarmActivity"
+            android:exported="true"
+            android:launchMode="singleTop"/>
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -30,13 +35,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".PermissionRequestActivity" />
 
-        <receiver android:name=".NotificationReceiver"
+        <receiver
+            android:name=".NotificationReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="TASK_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="TASK_ALARM" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".AlarmForegroundService" android:exported="false" />
 
     </application>
 
